@@ -33,7 +33,7 @@ module Backup
 
       # The Syncer may call this method in multiple threads,
       # but #objects is always called before this occurs.
-      def upload(src, dest)
+      def upload(src, dest, options = {})
         create_containers
 
         file_size = File.size(src)

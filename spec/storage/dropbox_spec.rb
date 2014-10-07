@@ -443,7 +443,7 @@ describe Storage::Dropbox do
         { :session => session, :cached_file => cached_file }
       ).returns(template)
       template.expects(:render).in_sequence(s).with(
-        'storage/dropbox/authorization_url.erb'
+        'cloud/dropbox/authorization_url.erb'
       )
       Timeout.expects(:timeout).in_sequence(s).with(180).yields
       STDIN.expects(:gets).in_sequence(s)
@@ -456,11 +456,11 @@ describe Storage::Dropbox do
 
       it 'caches and returns the new session' do
         template.expects(:render).in_sequence(s).with(
-          'storage/dropbox/authorized.erb'
+          'cloud/dropbox/authorized.erb'
         )
         storage.expects(:write_cache!).in_sequence(s).with(session)
         template.expects(:render).in_sequence(s).with(
-          'storage/dropbox/cache_file_written.erb'
+          'cloud/dropbox/cache_file_written.erb'
         )
 
         storage.send(:create_write_and_return_new_session!).should be(session)
@@ -473,9 +473,9 @@ describe Storage::Dropbox do
       end
 
       it 'raises an error' do
-        template.expects(:render).with('storage/dropbox/authorized.erb').never
+        template.expects(:render).with('cloud/dropbox/authorized.erb').never
         storage.expects(:write_cache!).never
-        template.expects(:render).with('storage/dropbox/cache_file_written.erb').never
+        template.expects(:render).with('cloud/dropbox/cache_file_written.erb').never
 
         expect do
           storage.send(:create_write_and_return_new_session!)

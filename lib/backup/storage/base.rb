@@ -24,7 +24,10 @@ module Backup
       def initialize(model, storage_id = nil, &block)
         @model = model
         @package = model.package
-        @storage_id = storage_id.to_s.gsub(/\W/, '_') if storage_id
+        if storage_id
+          @storage_id = storage_id.to_s.gsub(/\W/, '_')
+          @package.storage_id = @storage_id
+        end
 
         load_defaults!
         instance_eval(&block) if block_given?
@@ -42,8 +45,8 @@ module Backup
       ##
       # Return the remote path for the current or given package.
       def remote_path(pkg = package)
-        path.empty? ? File.join(pkg.trigger, pkg.time) :
-                      File.join(path, pkg.trigger, pkg.time)
+        path.empty? ? File.join(pkg.trigger, @storage_id || '', pkg.time) :
+                      File.join(path, pkg.trigger, @storage_id || '', pkg.time)
       end
       alias :remote_path_for :remote_path
 

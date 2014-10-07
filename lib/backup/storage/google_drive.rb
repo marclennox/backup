@@ -1,15 +1,15 @@
 # encoding: utf-8
-require 'backup/cloud_io/dropbox'
+require 'backup/cloud_io/google_drive'
 
 module Backup
   module Storage
-    class Dropbox < Base
+    class GoogleDrive < Base
       include Storage::Cycler
       class Error < Backup::Error; end
 
       ##
-      # Dropbox API credentials
-      attr_accessor :api_key, :api_secret
+      # Google Drive API credentials
+      attr_accessor :client_id, :client_secret
 
       ##
       # Path to store cached authorized session.
@@ -21,13 +21,6 @@ module Backup
       # By default, +cache_path+ is '.cache', which would be
       # '~/Backup/.cache/' if using the default root_path.
       attr_accessor :cache_path
-
-      ##
-      # Dropbox Access Type
-      # Valid values are:
-      #   :app_folder (default)
-      #   :dropbox (full access)
-      attr_accessor :access_type
 
       ##
       # Chunk size, specified in MiB, for the ChunkedUploader.
@@ -52,7 +45,6 @@ module Backup
 
         @path           ||= 'backups'
         @cache_path     ||= '.cache'
-        @access_type    ||= :app_folder
         @chunk_size     ||= 4 # MiB
         @max_retries    ||= 10
         @retry_waitsec  ||= 30
@@ -62,11 +54,10 @@ module Backup
       private
 
       def cloud_io
-        @cloud_io ||= CloudIO::Dropbox.new(
-          :api_key       => api_key,
-          :api_secret    => api_secret,
+        @cloud_io ||= CloudIO::GoogleDrive.new(
+          :client_id     => client_id,
+          :client_secret => client_secret,
           :cache_path    => cache_path,
-          :access_type   => access_type,
           :max_retries   => max_retries,
           :retry_waitsec => retry_waitsec,
           :chunk_size    => chunk_size
@@ -74,15 +65,17 @@ module Backup
       end
 
       ##
-      # Transfer each of the package files to Dropbox in chunks of +chunk_size+.
+      # Transfer each of the package files to Google Drive in chunks of +chunk_size+.
       # Each chunk will be retried +chunk_retries+ times, pausing +retry_waitsec+
       # between retries, if errors occur.
       def transfer!
+        # Upload each package
         package.filenames.each do |filename|
           src = File.join(Config.tmp_path, filename)
           dest = File.join(remote_path, filename)
           Logger.info "Storing '#{ dest }'..."
-          cloud_io.upload(src, dest)
+          # Upload the file
+          cloud_io.upload(src, dest, remote_base: remote_path_for(package))
         end
       end
 

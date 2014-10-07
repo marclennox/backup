@@ -20,7 +20,9 @@ module Backup
       # in the log messages.
       attr_reader :syncer_id
 
-      attr_reader :excludes
+      attr_accessor :directories
+
+      attr_accessor :excludes
 
       def initialize(syncer_id = nil)
         @syncer_id = syncer_id
@@ -35,6 +37,11 @@ module Backup
       ##
       # Syntactical suger for the DSL for adding directories
       def directories(&block)
+        if @directories.is_a?(Proc)
+          directories_proc=@directories
+          @directories = []
+          directories_proc.call(self)
+        end
         return @directories unless block_given?
         instance_eval(&block)
       end

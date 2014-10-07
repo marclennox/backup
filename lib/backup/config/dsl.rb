@@ -29,7 +29,7 @@ module Backup
             [ # Databases
               ['MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Riak', 'OpenLDAP', 'SQLite'],
               # Storages
-              ['S3', 'CloudFiles', 'Ninefold', 'Dropbox', 'FTP',
+              ['S3', 'CloudFiles', 'Ninefold', 'GoogleDrive', 'Dropbox', 'FTP',
               'SFTP', 'SCP', 'RSync', 'Local'],
               # Compressors
               ['Gzip', 'Bzip2', 'Custom', 'Pbzip2', 'Lzma'],
@@ -37,7 +37,7 @@ module Backup
               ['OpenSSL', 'GPG'],
               # Syncers
               [
-                { 'Cloud' => ['CloudFiles', 'S3'] },
+                { 'Cloud' => ['CloudFiles', 'S3', 'GoogleDrive', 'Dropbox'] },
                 { 'RSync' => ['Push', 'Pull', 'Local'] }
               ],
               # Notifiers

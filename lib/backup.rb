@@ -37,17 +37,18 @@ module Backup
   ##
   # Autoload Backup storage files
   module Storage
-    autoload :Base,       File.join(STORAGE_PATH, 'base')
-    autoload :Cycler,     File.join(STORAGE_PATH, 'cycler')
-    autoload :S3,         File.join(STORAGE_PATH, 's3')
-    autoload :CloudFiles, File.join(STORAGE_PATH, 'cloud_files')
-    autoload :Ninefold,   File.join(STORAGE_PATH, 'ninefold')
-    autoload :Dropbox,    File.join(STORAGE_PATH, 'dropbox')
-    autoload :FTP,        File.join(STORAGE_PATH, 'ftp')
-    autoload :SFTP,       File.join(STORAGE_PATH, 'sftp')
-    autoload :SCP,        File.join(STORAGE_PATH, 'scp')
-    autoload :RSync,      File.join(STORAGE_PATH, 'rsync')
-    autoload :Local,      File.join(STORAGE_PATH, 'local')
+    autoload :Base,        File.join(STORAGE_PATH, 'base')
+    autoload :Cycler,      File.join(STORAGE_PATH, 'cycler')
+    autoload :S3,          File.join(STORAGE_PATH, 's3')
+    autoload :CloudFiles,  File.join(STORAGE_PATH, 'cloud_files')
+    autoload :Ninefold,    File.join(STORAGE_PATH, 'ninefold')
+    autoload :Dropbox,     File.join(STORAGE_PATH, 'dropbox')
+    autoload :GoogleDrive, File.join(STORAGE_PATH, 'google_drive')
+    autoload :FTP,         File.join(STORAGE_PATH, 'ftp')
+    autoload :SFTP,        File.join(STORAGE_PATH, 'sftp')
+    autoload :SCP,         File.join(STORAGE_PATH, 'scp')
+    autoload :RSync,       File.join(STORAGE_PATH, 'rsync')
+    autoload :Local,       File.join(STORAGE_PATH, 'local')
   end
 
   ##
@@ -55,10 +56,12 @@ module Backup
   module Syncer
     autoload :Base, File.join(SYNCER_PATH, 'base')
     module Cloud
-      autoload :Base,       File.join(SYNCER_PATH, 'cloud', 'base')
-      autoload :LocalFile,  File.join(SYNCER_PATH, 'cloud', 'local_file')
-      autoload :CloudFiles, File.join(SYNCER_PATH, 'cloud', 'cloud_files')
-      autoload :S3,         File.join(SYNCER_PATH, 'cloud', 's3')
+      autoload :Base,        File.join(SYNCER_PATH, 'cloud', 'base')
+      autoload :LocalFile,   File.join(SYNCER_PATH, 'cloud', 'local_file')
+      autoload :CloudFiles,  File.join(SYNCER_PATH, 'cloud', 'cloud_files')
+      autoload :S3,          File.join(SYNCER_PATH, 'cloud', 's3')
+      autoload :Dropbox,     File.join(SYNCER_PATH, 'cloud', 'dropbox')
+      autoload :GoogleDrive, File.join(SYNCER_PATH, 'cloud', 'google_drive')
     end
     module RSync
       autoload :Base,  File.join(SYNCER_PATH, 'rsync', 'base')

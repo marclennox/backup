@@ -33,7 +33,7 @@ module Backup
 
       # The Syncer may call this method in multiple threads.
       # However, #objects is always called prior to multithreading.
-      def upload(src, dest)
+      def upload(src, dest, options = {})
         file_size = File.size(src)
         chunk_bytes = chunk_size * 1024**2
         if chunk_bytes > 0 && file_size > chunk_bytes

@@ -4,6 +4,10 @@ module Backup
   class Package
 
     ##
+    # The storage id of the initiating backup
+    attr_accessor :storage_id
+
+    ##
     # The time when the backup initiated (in format: 2011.02.20.03.29.59)
     attr_accessor :time
 
@@ -44,7 +48,7 @@ module Backup
     end
 
     def basename
-      "#{ trigger }.#{ extension }"
+      "#{ trigger }" + (storage_id ? "-#{ storage_id }" : '') + ".#{ extension }"
     end
 
   end

@@ -1,0 +1,6 @@
+
+Visit the following URL to authorize your Google Drive App with Backup:
+
+  <%= @session.authorization.authorization_uri(access_type: :offline) %>
+
+Paste your authorization code into this window and hit "Enter/Return" once you're authorized.

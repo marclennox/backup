@@ -137,6 +137,17 @@ module Backup
       def reset!
         @table.clear
       end
+
+      [:directories].each do |block_attribute|
+        define_method block_attribute do |&block|
+          if block
+            @table.send(:[]=, block_attribute, block)
+          else
+            @table.send(:[], block_attribute)
+          end
+        end
+      end
+
     end
 
   end

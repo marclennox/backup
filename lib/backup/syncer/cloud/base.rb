@@ -56,17 +56,15 @@ module Backup
           log!(:finished)
         end
 
-        private
+        protected
 
         def sync_directory(dir)
           remote_base = path.empty? ? File.basename(dir) :
                                       File.join(path, File.basename(dir))
           Logger.info "Gathering remote data for '#{ remote_base }'..."
           remote_files = get_remote_files(remote_base)
-
           Logger.info("Gathering local data for '#{ File.expand_path(dir) }'...")
           local_files = LocalFile.find(dir, excludes)
-
           relative_paths = (local_files.keys | remote_files.keys).sort
           if relative_paths.empty?
             Logger.info 'No local or remote files found'
@@ -76,7 +74,7 @@ module Backup
               local_file  = local_files[relative_path]
               remote_md5  = remote_files[relative_path]
               remote_path = File.join(remote_base, relative_path)
-              sync_file(local_file, remote_path, remote_md5)
+              sync_file(local_file, remote_path, remote_md5, remote_base)
             end
 
             if thread_count > 0
@@ -84,6 +82,38 @@ module Backup
             else
               relative_paths.each(&sync_block)
             end
+          end
+        end
+
+        private
+
+        # If an exception is raised in multiple threads, only the exception
+        # raised in the first thread that Thread#join is called on will be
+        # handled. So all exceptions are logged first with their details,
+        # then a generic exception is raised.
+        def sync_file(local_file, remote_path, remote_md5, remote_base = nil)
+          if local_file && File.exist?(local_file.path)
+            if local_file.md5 == remote_md5
+              MUTEX.synchronize { @unchanged_count += 1 }
+            else
+              Logger.info("\s\s[transferring] '#{ remote_path }'")
+              begin
+                cloud_io.upload(local_file.path, remote_path, remote_base: remote_base)
+                MUTEX.synchronize { @transfer_count += 1 }
+              rescue CloudIO::FileSizeError => err
+                MUTEX.synchronize { @skipped_count += 1 }
+                Logger.warn Error.wrap(err, "Skipping '#{ remote_path }'")
+              rescue => err
+                Logger.error(err)
+                raise Error, <<-EOS
+                  Syncer Failed!
+                  See the Retry [info] and [error] messages (if any)
+                  for details on each failed operation.
+                EOS
+              end
+            end
+          elsif remote_md5
+            @orphans << remote_path
           end
         end
 
@@ -111,36 +141,6 @@ module Backup
             sleep num_threads * 0.1
           end
           threads.each(&:join)
-        end
-
-        # If an exception is raised in multiple threads, only the exception
-        # raised in the first thread that Thread#join is called on will be
-        # handled. So all exceptions are logged first with their details,
-        # then a generic exception is raised.
-        def sync_file(local_file, remote_path, remote_md5)
-          if local_file && File.exist?(local_file.path)
-            if local_file.md5 == remote_md5
-              MUTEX.synchronize { @unchanged_count += 1 }
-            else
-              Logger.info("\s\s[transferring] '#{ remote_path }'")
-              begin
-                cloud_io.upload(local_file.path, remote_path)
-                MUTEX.synchronize { @transfer_count += 1 }
-              rescue CloudIO::FileSizeError => err
-                MUTEX.synchronize { @skipped_count += 1 }
-                Logger.warn Error.wrap(err, "Skipping '#{ remote_path }'")
-              rescue => err
-                Logger.error(err)
-                raise Error, <<-EOS
-                  Syncer Failed!
-                  See the Retry [info] and [error] messages (if any)
-                  for details on each failed operation.
-                EOS
-              end
-            end
-          elsif remote_md5
-            @orphans << remote_path
-          end
         end
 
         def process_orphans

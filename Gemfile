@@ -25,11 +25,12 @@ group :production do
   gem 'fog'
   # gem 'excon' - use version specified by fog
   gem 'unf' # for fog/AWS
-  gem 'dropbox-sdk', '= 1.5.1' # patched
+  gem 'dropbox-sdk'
+  gem 'google-api-client'
   gem 'net-ssh'
   gem 'net-scp'
   gem 'net-sftp'
-  gem 'mail', '= 2.5.4' # patched
+  gem 'mail'
   gem 'pagerduty'
   gem 'twitter'
   gem 'hipchat'
