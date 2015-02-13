@@ -15,6 +15,7 @@ module Backup
       APPLICATION_NAME = 'Backup Rubygem'
       TAG_PROPERTY_VALUE = 'backup_gem'
       REMOTE_FOLDER_MUTEX=Mutex.new
+      METADATA_CACHE_MUTEX = Mutex.new
 
       ##
       # Google Drive API credentials
@@ -256,6 +257,47 @@ module Backup
         end
       end
 
+      def metadata_cache_file
+        "#{session_cache_file}.yml"
+      end
+
+      ##
+      # Stores the specified object's local cached metadata
+      def store_metadata_cache!(metadata)
+        METADATA_CACHE_MUTEX.synchronize do
+          cache_key = metadata['path'].sub(/^\//, '').chomp('/')
+          cache = YAML.load_file(metadata_cache_file) rescue nil
+          attrs = ((cache ||= {})[cache_key] ||= {})
+          attrs['id'] = metadata['id']
+          cache[cache_key] = attrs
+          cache = cache.keys.sort_by{|k| k.downcase}.inject({}) {|h,k| h[k] = cache[k]; h}
+          File.open(metadata_cache_file, "w") {|f| f.write(cache.to_yaml)}
+          metadata
+        end
+      end
+
+      ##
+      # Loads the specified file's local cached metadata
+      def augment_metadata_from_cache(metadata)
+        cache_key = metadata['path'].sub(/^\//, '').chomp('/')
+        cache = YAML.load_file(metadata_cache_file) rescue nil
+        attrs = ((cache ||= {})[cache_key] ||= {})
+        metadata['id'] = attrs['id'] if attrs['id']
+        metadata
+      end
+
+      ##
+      # Deletes the specified file's local cached metadata
+      def delete_metadata_cache(file_path)
+        METADATA_CACHE_MUTEX.synchronize do
+          cache_key = file_path.sub(/^\//, '').chomp('/')
+          cache = YAML.load_file(metadata_cache_file) rescue nil
+          (cache ||= {}).reject!{|k,v| k == cache_key}
+          File.open(metadata_cache_file, "w") {|f| f.write(cache.to_yaml)}
+          file_path
+        end
+      end
+
       ##
       # Get the metadata for an existing folder or create it if not in existence.
       def folder_entries(path)
@@ -353,6 +395,7 @@ module Backup
         path.split('/').reject{|e| e == ""}.each do |path_part|
           begin
             folder_id = find_folder(path_part, folder_id, backup_sync_tag)
+            store_metadata_cache!('path' => path, 'id' => folder_id) if folder_id
           rescue => err
             raise Error.wrap(err, "Unable to get folder #{path}")
           end
@@ -361,7 +404,7 @@ module Backup
       end
 
       def get_file_id(path, backup_sync_tag = nil)
-        folder_id = nil
+        file_id = folder_id = nil
         File.dirname(path).split('/').reject{|e| e == ""}.each do |path_part|
           begin
             folder_id = find_folder(path_part, folder_id, backup_sync_tag)
@@ -389,11 +432,11 @@ module Backup
           result = connection.execute(request)
           if result.data.items && result.data.items.length > 0
             # Google Drive allows files with the same title. Return only the first result
-            result.data.items[0].id
-          else
-            nil
+            file_id = result.data.items[0].id
+            store_metadata_cache!('path' => path, 'id' => file_id)
           end
         end
+        file_id
       end
 
       def find_folder(title, parent_id = 'root', backup_sync_tag = nil)
