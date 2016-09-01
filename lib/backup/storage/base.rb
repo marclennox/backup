@@ -24,6 +24,11 @@ module Backup
       #   @return [Integer|Time]
       attr_accessor :keep
 
+      ##
+      # Sets whether or not the package name and storage directory should include
+      # the storage_id, if present
+      attr_accessor :package_with_storage_id
+
       attr_reader :model, :package, :storage_id
 
       ##
@@ -35,9 +40,9 @@ module Backup
         @model = model
         @package = model.package
         @storage_id = storage_id.to_s.gsub(/\W/, '_') if storage_id
-
         load_defaults!
         instance_eval(&block) if block_given?
+        @package.storage_id = @storage_id if storage_id && package_with_storage_id
       end
 
       def perform!
@@ -54,8 +59,8 @@ module Backup
       ##
       # Return the remote path for the current or given package.
       def remote_path(pkg = package)
-        path.empty? ? File.join(pkg.trigger, pkg.time) :
-                      File.join(path, pkg.trigger, pkg.time)
+        path.empty? ? File.join(pkg.trigger, (storage_id && package_with_storage_id ? storage_id : ''), pkg.time) :
+                      File.join(path, pkg.trigger, (storage_id && package_with_storage_id ? storage_id : ''), pkg.time)
       end
       alias :remote_path_for :remote_path
 
